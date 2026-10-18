@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linux Distro Finder Quiz</title>
+<meta name="description" content="Answer 10 questions and find out which Linux distribution is right for you.">
+<style>
+/* ===== Design tokens ===== */
+:root {
+  --bg-deep: #0a192f;
+  --bg-mid: #112240;
+  --bg-light: #1d3557;
+  --accent: #64ffda;
+  --accent-2: #4facfe;
+  --text: #e6f1ff;
+  --text-dim: #8ea6c8;
+  --glass: rgba(17, 34, 64, 0.55);
+  --glass-strong: rgba(17, 34, 64, 0.8);
+  --border: rgba(100, 255, 218, 0.16);
+  --shadow: 0 10px 40px rgba(2, 12, 27, 0.55);
+  --radius: 20px;
+  --font: 'Inter', 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Base ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  color: var(--text);
+  line-height: 1.6;
+  background:
+    radial-gradient(900px 600px at 10% -10%, rgba(79, 172, 254, 0.18), transparent 60%),
+    radial-gradient(800px 600px at 100% 10%, rgba(100, 255, 218, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--bg-deep), #071324 100%);
+  background-attachment: fixed;
+}
+h1, h2, h3 { line-height: 1.2; margin: 0 0 .5em; }
+a { color: var(--accent-2); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.container { width: min(1000px, 100% - 2rem); margin-inline: auto; }
+
+/* ===== Header ===== */
+header.hero { text-align: center; padding: 3rem 0 1.5rem; }
+header.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+header.hero p { color: var(--text-dim); max-width: 56ch; margin: 0 auto; }
+
+/* ===== Glass card ===== */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  appearance: none; border: 0; cursor: pointer;
+  font: inherit; font-weight: 600;
+  padding: .75rem 1.4rem; border-radius: 999px;
+  color: #04202b;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.35);
+  text-decoration: none; display: inline-block;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(100, 255, 218, 0.35); }
+.btn.ghost {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border); box-shadow: none;
+}
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn[disabled] { opacity: .35; cursor: not-allowed; transform: none; }
+
+/* ===== Quiz ===== */
+#quiz { padding: 1.5rem; margin-block: 1rem 3rem; }
+.progress-wrap { margin-bottom: 1.5rem; }
+.progress-meta { display: flex; justify-content: space-between; font-size: .85rem; color: var(--text-dim); margin-bottom: .5rem; }
+.progress-track { height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 99px; transition: width .5s ease; }
+
+.question-box { animation: slideUp .45s ease both; }
+.question-box h2 { font-size: clamp(1.3rem, 3.2vw, 1.8rem); }
+.question-box .hint { color: var(--text-dim); margin-top: 0; }
+.options { display: grid; gap: .9rem; margin-top: 1.25rem; }
+.option {
+  appearance: none; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+  display: flex; gap: 1rem; align-items: center;
+  padding: 1rem 1.2rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+.option:hover { transform: translateY(-2px); border-color: var(--accent); background: rgba(100,255,218,.07); }
+.option.selected { border-color: var(--accent); background: rgba(100,255,218,.14); }
+.option .emoji { font-size: 1.6rem; flex: none; }
+.option .label strong { display: block; }
+.option .label span { color: var(--text-dim); font-size: .9rem; }
+.quiz-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; }
+
+/* ===== Results ===== */
+#results { display: none; margin-bottom: 3rem; }
+#results.show { display: block; animation: fadeIn .6s ease both; }
+.section-title { text-align: center; margin: 2rem 0 1.5rem; font-size: clamp(1.5rem, 3.5vw, 2.1rem); }
+.section-title small { display: block; color: var(--text-dim); font-size: .95rem; font-weight: 400; margin-top: .4rem; }
+
+.podium { display: grid; gap: 1rem; }
+.rank-card { padding: 1.25rem; display: grid; grid-template-columns: auto 1fr; gap: 1rem 1.25rem; align-items: center; opacity: 0; animation: slideUp .6s ease forwards; }
+.rank-card:nth-child(1) { animation-delay: .1s; border-color: rgba(100,255,218,.5); }
+.rank-card:nth-child(2) { animation-delay: .35s; }
+.rank-card:nth-child(3) { animation-delay: .6s; }
+.medal { font-size: 2rem; text-align: center; }
+.rank-info h3 { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: .25rem; }
+.rank-info h3 .pct { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rank-info p { margin: 0 0 .6rem; color: var(--text-dim); font-size: .92rem; }
+.match-track { height: 12px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.match-bar { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 14px rgba(100,255,218,.55); transition: width 1.3s cubic-bezier(.2,.8,.2,1); }
+.rank-actions { grid-column: 1 / -1; display: flex; gap: .6rem; flex-wrap: wrap; }
+
+.profile { padding: 1.25rem; margin-top: 1.25rem; }
+.profile h3 { font-size: 1.05rem; }
+.profile-grid { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.axis { font-size: .85rem; color: var(--text-dim); }
+.axis .track { height: 6px; border-radius: 99px; background: rgba(255,255,255,.08); margin-top: .3rem; overflow: hidden; }
+.axis .fill { height: 100%; background: var(--accent-2); border-radius: 99px; transition: width 1s ease; width: 0; }
+
+/* ===== Logo tile ===== */
+.logo-tile {
+  width: 64px; height: 64px; flex: none;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.93);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.35);
+}
+.logo-tile img { width: 40px; height: 40px; object-fit: contain; }
+.logo-tile .fallback { font-weight: 800; font-size: 1.7rem; color: #0a192f; }
+
+/* ===== Distro details ===== */
+#distros { display: none; padding-bottom: 3rem; }
+#distros.show { display: block; }
+.distro { padding: 1.5rem; margin-bottom: 1.5rem; scroll-margin-top: 1rem; }
+.distro.top { border-color: rgba(100,255,218,.5); }
+.distro-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.distro-head h3 { margin: 0; font-size: 1.5rem; }
+.distro-head .tag { color: var(--text-dim); font-size: .9rem; }
+.badge { display: inline-block; font-size: .75rem; font-weight: 700; padding: .2rem .6rem; border-radius: 99px; background: rgba(100,255,218,.15); color: var(--accent); border: 1px solid var(--border); }
+.distro p.philosophy { margin: 0 0 1rem; }
+.distro .btn { margin-bottom: 1.25rem; }
+
+/* Tables: horizontal scroll wrapper keeps them readable on small screens */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .9rem; }
+caption { text-align: left; padding: .6rem .9rem; color: var(--text-dim); font-size: .8rem; caption-side: bottom; }
+th, td { padding: .75rem .9rem; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,.06); }
+thead th { background: rgba(100,255,218,.08); color: var(--accent); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr.hl { background: rgba(100,255,218,.07); }
+th[scope="row"] { white-space: nowrap; }
+.dots { display: inline-flex; gap: 3px; margin-right: .5rem; vertical-align: middle; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.15); }
+.dots i.on { background: var(--accent-2); box-shadow: 0 0 6px rgba(79,172,254,.7); }
+
+.compare { padding: 1.25rem; }
+
+footer { text-align: center; color: var(--text-dim); font-size: .8rem; padding: 2rem 1rem 3rem; }
+
+/* ===== Animations ===== */
+@keyframes slideUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; animation-delay: 0s !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 560px) {
+  #quiz { padding: 1rem; }
+  .rank-card { grid-template-columns: 1fr; text-align: left; }
+  .medal { text-align: left; }
+  .option { padding: .85rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <h1>Linux Distro Finder</h1>
+    <p>Answer 10 quick questions about how you use your computer and find out which Linux distribution is right for you.</p>
+  </div>
+</header>
+
+<main class="container">
+  <!-- Quiz -->
+  <section id="quiz" class="glass" aria-labelledby="quiz-heading">
+    <h2 id="quiz-heading" class="sr-only">Quiz</h2>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="progress-text">Question 1 of 10</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-track" aria-label="Quiz progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+    <div id="question-container" aria-live="polite"></div>
+    <div class="quiz-nav">
+      <button class="btn ghost" id="btn-back" type="button">← Back</button>
+      <button class="btn" id="btn-next" type="button" disabled>Next →</button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" aria-labelledby="results-heading" tabindex="-1">
+    <h2 class="section-title" id="results-heading">Your Top 3
+      <small>How well each distro matches your answers</small>
+    </h2>
+    <div class="podium" id="podium"></div>
+    <div class="glass profile" id="profile"></div>
+    <div style="text-align:center; margin-top:1.5rem;">
+      <button class="btn ghost" id="btn-restart" type="button">↺ Retake the quiz</button>
+    </div>
+  </section>
+
+  <!-- Distro database -->
+  <section id="distros" aria-labelledby="distros-heading">
+    <h2 class="section-title" id="distros-heading">Distro profiles
+      <small>Your top 3 first, followed by other popular distros</small>
+    </h2>
+    <div id="distro-list"></div>
+    <div class="glass compare">
+      <h3>Quick comparison</h3>
+      <div class="table-scroll" id="compare-table"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  These details are simplified estimates. Always check the official website before downloading. Logos belong to their respective owners.
+</footer>
+
+<script>
+/* ============================================================
+   DATA
+   Trait axes (0-10): control, ease, stability, freshness, lightness
+   ============================================================ */
+const AXES = {
+  control:   'Control and customization',
+  ease:      'Ease of use',
+  stability: 'Stability',
+  freshness: 'Software freshness',
+  lightness: 'Lightweight / minimalism'
+};
+
+/* Quiz questions: each option adds a preference value (0-10) to some axes.
+   The user's profile for an axis is the average of all values given for it. */
+const QUESTIONS = [
+  {
+    q: 'How much do you want to configure your system?',
+    hint: 'Think about how hands-on you like to be with your computer.',
+    options: [
+      { emoji: '🛋️', title: 'No fuss', desc: 'I turn it on and it just works.', prefs: { control: 2, ease: 10 } },
+      { emoji: '🎛️', title: 'A few tweaks', desc: 'I change themes and settings, but nothing extreme.', prefs: { control: 5, ease: 6 } },
+      { emoji: '🛠️', title: 'I want to decide everything', desc: 'I choose every component myself.', prefs: { control: 10, ease: 2 } }
+    ]
+  },
+  {
+    q: 'Do you prefer stability or the latest features?',
+    hint: 'There is no right answer—just what works for you.',
+    options: [
+      { emoji: '🪨', title: 'Stability above all', desc: 'I prefer a well-tested system.', prefs: { stability: 10, freshness: 2 } },
+      { emoji: '⚖️', title: 'A good balance', desc: 'New features, but without too much risk.', prefs: { stability: 6, freshness: 6 } },
+      { emoji: '🚀', title: 'Always the latest version', desc: 'I want new features as soon as they come out.', prefs: { stability: 3, freshness: 10 } }
+    ]
+  },
+  {
+    q: 'How much experience do you have with Linux and the terminal?',
+    hint: 'Be honest—no one is judging you.',
+    options: [
+      { emoji: '🌱', title: 'I am a beginner', desc: 'The terminal makes me a little nervous.', prefs: { ease: 10, control: 2 } },
+      { emoji: '🌿', title: 'I can get by', desc: 'I know how to use a few commands.', prefs: { ease: 6, control: 6 } },
+      { emoji: '🌳', title: 'I live in the terminal', desc: 'The terminal feels like home.', prefs: { ease: 2, control: 9 } }
+    ]
+  },
+  {
+    q: 'How much time do you want to spend on installation?',
+    hint: 'From downloading to a ready-to-use desktop.',
+    options: [
+      { emoji: '⚡', title: 'A few minutes', desc: 'A graphical installer, just click through.', prefs: { ease: 10, control: 3 } },
+      { emoji: '⏱️', title: 'About an hour is fine', desc: 'I am happy to make a few choices along the way.', prefs: { ease: 6, control: 6 } },
+      { emoji: '🧩', title: 'A whole evening', desc: 'I enjoy building the system piece by piece.', prefs: { ease: 1, control: 10 } }
+    ]
+  },
+  {
+    q: 'What kind of computer will you use?',
+    hint: 'Hardware resources matter more than you might think.',
+    options: [
+      { emoji: '🕰️', title: 'An older PC', desc: 'Not much RAM and an aging processor.', prefs: { lightness: 10 } },
+      { emoji: '💻', title: 'An average PC', desc: 'Nothing special, but it works well.', prefs: { lightness: 5 } },
+      { emoji: '🖥️', title: 'A powerful machine', desc: 'Plenty of resources to spare.', prefs: { lightness: 2 } }
+    ]
+  },
+  {
+    q: 'How do you feel about updates?',
+    hint: 'Systems change over time—how often would you like yours to change?',
+    options: [
+      { emoji: '📅', title: 'A few times a year', desc: 'Large, scheduled updates.', prefs: { stability: 9, freshness: 3 } },
+      { emoji: '🔄', title: 'Every now and then', desc: 'A new version about every six months.', prefs: { stability: 6, freshness: 7 } },
+      { emoji: '🌊', title: 'Continuously', desc: 'A steady stream of updates, even daily.', prefs: { stability: 3, freshness: 10 } }
+    ]
+  },
+  {
+    q: 'What worries you the most?',
+    hint: 'Choose the concern that matters most to you.',
+    options: [
+      { emoji: '🤯', title: 'Not knowing what to do', desc: 'I want clear guides and a simple experience.', prefs: { ease: 10, stability: 6 } },
+      { emoji: '💥', title: 'Something breaking after an update', desc: 'Reliability matters to me.', prefs: { stability: 10, freshness: 3 } },
+      { emoji: '🐌', title: 'Outdated software', desc: 'I hate waiting for new features.', prefs: { freshness: 10, stability: 4 } }
+    ]
+  },
+  {
+    q: 'What will you mainly use your computer for?',
+    hint: 'Your primary use can help guide your choice.',
+    options: [
+      { emoji: '📚', title: 'Office, study, and web browsing', desc: 'Documents, browser, and video.', prefs: { ease: 9, stability: 8 } },
+      { emoji: '🎮', title: 'Gaming and creative work', desc: 'Recent drivers and strong performance.', prefs: { freshness: 9, ease: 6 } },
+      { emoji: '👨‍💻', title: 'Development and servers', desc: 'Tools, control, and reproducible environments.', prefs: { control: 8, stability: 7 } }
+    ]
+  },
+  {
+    q: 'How do you like to install software?',
+    hint: 'The package manager can make a big difference.',
+    options: [
+      { emoji: '🛍️', title: 'With a graphical app store', desc: 'I click and it installs.', prefs: { ease: 10, control: 3 } },
+      { emoji: '⌨️', title: 'With a command', desc: 'It is quick, and I know what it does.', prefs: { ease: 5, control: 7 } },
+      { emoji: '📝', title: 'Configured by hand', desc: 'I want to know exactly what goes into my system.', prefs: { control: 10, lightness: 8 } }
+    ]
+  },
+  {
+    q: 'What do you do when something goes wrong?',
+    hint: 'Last question, promise!',
+    options: [
+      { emoji: '🙋', title: 'Look for an easy guide', desc: 'A welcoming community is a plus.', prefs: { ease: 10, stability: 7 } },
+      { emoji: '🔍', title: 'Read the logs and experiment', desc: 'I like figuring out what went wrong.', prefs: { control: 7, ease: 5 } },
+      { emoji: '📖', title: 'Study the documentation', desc: 'I dig deep until I find a solution.', prefs: { control: 10, ease: 2 } }
+    ]
+  }
+];
+
+/* Distro database. level fields: t = text, l = 1-5 dots. */
+const DISTROS = [
+  {
+    id: 'arch', name: 'Arch Linux', slug: 'archlinux', letter: 'A',
+    tagline: 'Minimal, rolling release, do it yourself',
+    url: 'https://archlinux.org/download/',
+    philosophy: 'Arch follows the KISS principle ("Keep It Simple"): it starts with a minimal base and lets you build the system you want without imposing choices. Updates are continuous (rolling release), and the Arch Wiki is considered one of the best Linux resources.',
+    traits: { control: 10, ease: 2, stability: 4, freshness: 10, lightness: 8 },
+    table: {
+      control:  { t: 'Very high', l: 5 },
+      learning: { t: 'Steep', l: 5 },
+      ready:    { t: 'Low', l: 1 },
+      stability:{ t: 'Medium (rolling)', l: 3 },
+      packages: 'Official repositories (pacman) + AUR, with tens of thousands of community packages'
+    }
+  },
+  {
+    id: 'endeavouros', name: 'EndeavourOS', slug: 'endeavouros', letter: 'E',
+    tagline: 'Arch Linux with a guided installer and a community',
+    url: 'https://endeavouros.com/latest-release/',
+    philosophy: 'EndeavourOS offers a graphical installer and an accessible starting environment while staying close to Arch Linux. It is a rolling release with access to the Arch repositories and AUR: it requires some familiarity with Linux but gives you plenty of freedom to choose.',
+    traits: { control: 8, ease: 6, stability: 4, freshness: 10, lightness: 7 },
+    table: {
+      control:  { t: 'High', l: 4 },
+      learning: { t: 'Moderate', l: 3 },
+      ready:    { t: 'High', l: 4 },
+      stability:{ t: 'Medium (rolling)', l: 3 },
+      packages: 'Arch repositories (pacman) + AUR, with tens of thousands of community packages'
+    }
+  },
+  {
+    id: 'cachyos', name: 'CachyOS', slug: 'cachyos', letter: 'C',
+    tagline: 'Arch optimized for performance and modern hardware',
+    url: 'https://cachyos.org/download/',
+    philosophy: 'CachyOS is based on Arch Linux and offers a rolling-release system with kernels and packages optimized for performance. It includes a graphical installer and dedicated tools, with a particular focus on gaming and recent hardware; frequent updates still require regular maintenance.',
+    traits: { control: 7, ease: 6, stability: 4, freshness: 10, lightness: 6 },
+    table: {
+      control:  { t: 'High', l: 4 },
+      learning: { t: 'Moderate', l: 3 },
+      ready:    { t: 'High', l: 4 },
+      stability:{ t: 'Medium (rolling)', l: 3 },
+      packages: 'CachyOS and Arch repositories (pacman) + AUR'
+    }
+  },
+  {
+    id: 'debian', name: 'Debian', slug: 'debian', letter: 'D',
+    tagline: 'The universal rock, parent of many distros',
+    url: 'https://www.debian.org/distrib/',
+    philosophy: 'Debian is a community-driven project based on the Social Contract and free software. Its Stable branch prioritizes reliability and thorough testing over the latest features, and it is the foundation of Ubuntu, Mint, and many other distros.',
+    traits: { control: 7, ease: 5, stability: 10, freshness: 2, lightness: 7 },
+    table: {
+      control:  { t: 'Medium-high', l: 4 },
+      learning: { t: 'Moderate', l: 3 },
+      ready:    { t: 'Medium-high', l: 4 },
+      stability:{ t: 'Very high', l: 5 },
+      packages: 'Over 60,000 packages (APT, .deb); conservative versions'
+    }
+  },
+  {
+    id: 'antix', name: 'antiX', slug: 'antix', letter: 'A',
+    tagline: 'Lightweight, fast, and systemd-free',
+    url: 'https://antixlinux.com/download/',
+    philosophy: 'antiX is a lightweight distribution based on Debian Stable, designed to work well on older computers too. It does not use systemd and offers minimal desktop environments based on window managers: it is lean and stable, but some of its choices and tools may be less familiar to beginners.',
+    traits: { control: 6, ease: 6, stability: 9, freshness: 3, lightness: 10 },
+    table: {
+      control:  { t: 'Medium-high', l: 4 },
+      learning: { t: 'Moderate', l: 3 },
+      ready:    { t: 'High', l: 4 },
+      stability:{ t: 'High (Debian Stable)', l: 4 },
+      packages: 'Debian and antiX repositories (APT, .deb)'
+    }
+  },
+  {
+    id: 'fedora', name: 'Fedora', slug: 'fedora', letter: 'F',
+    tagline: 'Modern innovation, backed by Red Hat',
+    url: 'https://fedoraproject.org/workstation/download',
+    philosophy: 'Fedora aims to adopt new technologies (Wayland, PipeWire, Btrfs) early while maintaining a polished, reliable experience. It releases about every six months with very recent software and is popular with developers and desktop users.',
+    traits: { control: 6, ease: 7, stability: 7, freshness: 8, lightness: 5 },
+    table: {
+      control:  { t: 'Medium', l: 3 },
+      learning: { t: 'Easy-moderate', l: 2 },
+      ready:    { t: 'High', l: 4 },
+      stability:{ t: 'Medium-high', l: 4 },
+      packages: 'Official repositories (DNF, .rpm) with tens of thousands of packages + Flatpak; RPM Fusion for extra codecs and drivers'
+    }
+  },
+  {
+    id: 'ubuntu', name: 'Ubuntu', slug: 'ubuntu', letter: 'U',
+    tagline: 'The most popular entry point',
+    url: 'https://ubuntu.com/download/desktop',
+    philosophy: 'Developed by Canonical, Ubuntu aims to make Linux accessible to everyone with a guided installation, broad hardware support, and a huge community. LTS releases receive five years of standard support, making them ideal if you want peace of mind.',
+    traits: { control: 5, ease: 9, stability: 8, freshness: 5, lightness: 4 },
+    table: {
+      control:  { t: 'Medium', l: 3 },
+      learning: { t: 'Easy', l: 2 },
+      ready:    { t: 'Very high', l: 5 },
+      stability:{ t: 'High (LTS)', l: 4 },
+      packages: 'Over 60,000 packages (APT) + Snap; third-party PPAs'
+    }
+  },
+  {
+    id: 'mint', name: 'Linux Mint', slug: 'linuxmint', letter: 'M',
+    tagline: 'Familiar, elegant, and straightforward',
+    url: 'https://linuxmint.com/download.php',
+    philosophy: 'Mint is based on Ubuntu and focuses on a traditional desktop (Cinnamon) that feels familiar to people coming from Windows. It includes multimedia codecs, graphical tools for everything, and a "just works" philosophy with very few surprises.',
+    traits: { control: 4, ease: 10, stability: 9, freshness: 3, lightness: 5 },
+    table: {
+      control:  { t: 'Medium-low', l: 2 },
+      learning: { t: 'Very easy', l: 1 },
+      ready:    { t: 'Very high', l: 5 },
+      stability:{ t: 'High', l: 4 },
+      packages: 'Ubuntu repositories (APT) + preconfigured Flatpak with a graphical software manager'
+    }
+  },
+  {
+    id: 'manjaro', name: 'Manjaro', slug: 'manjaro', letter: 'M',
+    tagline: 'The power of Arch, made accessible',
+    url: 'https://manjaro.org/products/download/x86',
+    philosophy: 'Manjaro is based on Arch, but adds a graphical installer, hardware detection, and its own repositories, which delay updates slightly for greater stability. It strikes a balance between getting the latest features and being easy to use.',
+    traits: { control: 6, ease: 7, stability: 5, freshness: 9, lightness: 5 },
+    table: {
+      control:  { t: 'Medium-high', l: 4 },
+      learning: { t: 'Moderate', l: 3 },
+      ready:    { t: 'High', l: 4 },
+      stability:{ t: 'Medium', l: 3 },
+      packages: 'Its own repositories (pacman) + optional access to the AUR; supports Flatpak and Snap'
+    }
+  },
+  {
+    id: 'gentoo', name: 'Gentoo', slug: 'gentoo', letter: 'G',
+    tagline: 'Everything compiled just for you',
+    url: 'https://www.gentoo.org/downloads/',
+    philosophy: 'Gentoo is a source-based distro: packages are compiled from source using Portage, with your choice of optimization and feature flags. It offers almost total control and teaches you a lot, but requires time, patience, and expertise.',
+    traits: { control: 10, ease: 1, stability: 6, freshness: 7, lightness: 8 },
+    table: {
+      control:  { t: 'Maximum', l: 5 },
+      learning: { t: 'Very steep', l: 5 },
+      ready:    { t: 'Very low', l: 1 },
+      stability:{ t: 'Medium-high', l: 4 },
+      packages: 'About 20,000 ebuilds (Portage), compiled locally with USE flags'
+    }
+  },
+  {
+    id: 'nixos', name: 'NixOS', slug: 'nixos', letter: 'N',
+    tagline: 'A declarative, reproducible system',
+    url: 'https://nixos.org/download/',
+    philosophy: 'NixOS describes the entire system in declarative configuration files: you can roll back to any previous version with a reboot and reproduce the same machine anywhere. This model is powerful and reliable, but very different from other distros.',
+    traits: { control: 10, ease: 2, stability: 7, freshness: 8, lightness: 5 },
+    table: {
+      control:  { t: 'Maximum', l: 5 },
+      learning: { t: 'Very steep', l: 5 },
+      ready:    { t: 'Low', l: 2 },
+      stability:{ t: 'High (rollback)', l: 4 },
+      packages: 'Over 100,000 packages in nixpkgs (Nix), with stable and unstable channels'
+    }
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  index: 0,                              // current question index
+  answers: new Array(QUESTIONS.length).fill(null)  // chosen option index per question
+};
+
+/* ============================================================
+   DOM REFERENCES
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const quizEl = $('#quiz');
+const container = $('#question-container');
+const btnBack = $('#btn-back');
+const btnNext = $('#btn-next');
+const resultsEl = $('#results');
+const distrosEl = $('#distros');
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+/* Build a logo tile; fall back to a letter badge if the image fails to load. */
+function logoTile(d) {
+  const tile = document.createElement('div');
+  tile.className = 'logo-tile';
+  tile.setAttribute('aria-hidden', 'true');
+  const img = document.createElement('img');
+  img.src = 'https://cdn.simpleicons.org/' + d.slug;
+  img.alt = '';
+  img.loading = 'lazy';
+  img.addEventListener('error', () => {
+    tile.replaceChildren();
+    const span = document.createElement('span');
+    span.className = 'fallback';
+    span.textContent = d.letter;
+    tile.appendChild(span);
+  });
+  tile.appendChild(img);
+  return tile;
+}
+
+/* Render 5-dot meter. */
+function dotsHTML(level, label) {
+  let h = '<span class="dots" role="img" aria-label="' + label + ' ' + level + ' out of 5">';
+  for (let i = 1; i <= 5; i++) h += '<i class="' + (i <= level ? 'on' : '') + '"></i>';
+  return h + '</span>';
+}
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+function renderQuestion() {
+  const q = QUESTIONS[state.index];
+  const chosen = state.answers[state.index];
+
+  const box = document.createElement('div');
+  box.className = 'question-box';
+  box.innerHTML = '<h2></h2><p class="hint"></p><div class="options" role="group"></div>';
+  box.querySelector('h2').textContent = q.q;
+  box.querySelector('.hint').textContent = q.hint;
+  const group = box.querySelector('.options');
+  group.setAttribute('aria-label', q.q);
+
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'option' + (chosen === i ? ' selected' : '');
+    b.setAttribute('aria-pressed', chosen === i ? 'true' : 'false');
+    b.innerHTML = '<span class="emoji" aria-hidden="true"></span><span class="label"><strong></strong><span></span></span>';
+    b.querySelector('.emoji').textContent = opt.emoji;
+    b.querySelector('strong').textContent = opt.title;
+    b.querySelector('.label > span').textContent = opt.desc;
+    b.addEventListener('click', () => selectOption(i));
+    group.appendChild(b);
+  });
+
+  container.replaceChildren(box);
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = QUESTIONS.length;
+  const pct = Math.round((state.index / total) * 100);
+  $('#progress-text').textContent = 'Question ' + (state.index + 1) + ' of ' + total;
+  $('#progress-pct').textContent = pct + '%';
+  $('#progress-bar').style.width = pct + '%';
+  $('#progress-track').setAttribute('aria-valuenow', pct);
+  btnBack.disabled = state.index === 0;
+  btnNext.disabled = state.answers[state.index] === null;
+  btnNext.textContent = state.index === total - 1 ? 'See results ✨' : 'Next →';
+}
+
+function selectOption(i) {
+  state.answers[state.index] = i;
+  container.querySelectorAll('.option').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === i);
+    el.setAttribute('aria-pressed', idx === i ? 'true' : 'false');
+  });
+  btnNext.disabled = false;
+}
+
+function goNext() {
+  if (state.answers[state.index] === null) return;
+  if (state.index < QUESTIONS.length - 1) {
+    state.index++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function goBack() {
+  if (state.index > 0) {
+    state.index--;
+    renderQuestion();
+  }
+}
+
+/* ============================================================
+   SCORING
+   Build the user's profile by averaging preferences per axis, then
+   compare it with each distro's trait vector (mean absolute distance).
+   ============================================================ */
+function computeProfile() {
+  const sums = {}, counts = {};
+  Object.keys(AXES).forEach(a => { sums[a] = 0; counts[a] = 0; });
+  state.answers.forEach((ans, qi) => {
+    if (ans === null) return;
+    const prefs = QUESTIONS[qi].options[ans].prefs;
+    Object.keys(prefs).forEach(a => { sums[a] += prefs[a]; counts[a]++; });
+  });
+  const profile = {};
+  Object.keys(AXES).forEach(a => { profile[a] = counts[a] ? sums[a] / counts[a] : 5; });
+  return profile;
+}
+
+function scoreDistros(profile) {
+  const axes = Object.keys(AXES);
+  return DISTROS.map(d => {
+    const meanDiff = axes.reduce((s, a) => s + Math.abs(profile[a] - d.traits[a]), 0) / axes.length;
+    const pct = Math.max(0, Math.min(100, Math.round(100 - meanDiff * 11)));
+    return { distro: d, pct };
+  }).sort((a, b) => b.pct - a.pct);
+}
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+function showResults() {
+  const profile = computeProfile();
+  const ranking = scoreDistros(profile);
+  const top3 = ranking.slice(0, 3);
+
+  // Complete progress bar
+  $('#progress-bar').style.width = '100%';
+  $('#progress-pct').textContent = '100%';
+
+  quizEl.style.display = 'none';
+  renderPodium(top3);
+  renderProfile(profile);
+  renderDistros(ranking);
+
+  resultsEl.classList.add('show');
+  distrosEl.classList.add('show');
+  resultsEl.focus({ preventScroll: true });
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Animate the match bars after the cards are in the DOM
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.match-bar').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+    document.querySelectorAll('.axis .fill').forEach(el => { el.style.width = el.dataset.w + '%'; });
+  }));
+}
+
+function renderPodium(top3) {
+  const podium = $('#podium');
+  podium.replaceChildren();
+  const medals = ['🥇', '🥈', '🥉'];
+
+  top3.forEach((r, i) => {
+    const d = r.distro;
+    const card = document.createElement('article');
+    card.className = 'glass rank-card';
+    card.innerHTML =
+      '<div class="medal" aria-hidden="true">' + medals[i] + '</div>' +
+      '<div class="rank-info">' +
+        '<h3><span class="name"></span><span class="pct"></span></h3>' +
+        '<p class="tag"></p>' +
+        '<div class="match-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="match-bar" data-pct="' + r.pct + '"></div></div>' +
+      '</div>' +
+      '<div class="rank-actions"></div>';
+    card.querySelector('.name').textContent = (i + 1) + '. ' + d.name;
+    card.querySelector('.pct').textContent = r.pct + '%';
+    card.querySelector('.tag').textContent = d.tagline;
+    card.querySelector('.match-track').setAttribute('aria-valuenow', r.pct);
+    card.querySelector('.match-track').setAttribute('aria-label', 'Match with ' + d.name);
+
+    const actions = card.querySelector('.rank-actions');
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'btn ghost';
+    more.textContent = 'View profile';
+    more.addEventListener('click', () => {
+      document.getElementById('distro-' + d.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    const dl = document.createElement('a');
+    dl.className = 'btn';
+    dl.href = d.url; dl.target = '_blank'; dl.rel = 'noopener noreferrer';
+    dl.textContent = 'Download ⬇';
+    actions.append(more, dl);
+
+    // Logo goes in the first column on wide screens, replacing the medal visually next to it
+    const info = card.querySelector('.rank-info');
+    info.parentNode.insertBefore(logoTile(d), info);
+    podium.appendChild(card);
+  });
+}
+
+function renderProfile(profile) {
+  const el = $('#profile');
+  let html = '<h3>Your profile</h3><div class="profile-grid">';
+  Object.keys(AXES).forEach(a => {
+    const w = Math.round(profile[a] * 10);
+    html += '<div class="axis"><span>' + AXES[a] + ' — ' + w + '%</span>' +
+            '<div class="track"><div class="fill" data-w="' + w + '"></div></div></div>';
+  });
+  el.innerHTML = html + '</div>';
+}
+
+function renderDistros(ranking) {
+  const list = $('#distro-list');
+  list.replaceChildren();
+
+  ranking.forEach((r, i) => {
+    const d = r.distro;
+    const isTop = i < 3;
+    const sec = document.createElement('article');
+    sec.className = 'glass distro' + (isTop ? ' top' : '');
+    sec.id = 'distro-' + d.id;
+
+    const head = document.createElement('div');
+    head.className = 'distro-head';
+    head.appendChild(logoTile(d));
+    const titleBox = document.createElement('div');
+    titleBox.innerHTML = '<h3></h3><span class="tag"></span>';
+    titleBox.querySelector('h3').textContent = d.name;
+    titleBox.querySelector('.tag').textContent = d.tagline;
+    head.appendChild(titleBox);
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.style.marginLeft = 'auto';
+    badge.textContent = isTop ? '#' + (i + 1) + ' · ' + r.pct + '% match' : r.pct + '% match';
+    head.appendChild(badge);
+    sec.appendChild(head);
+
+    const p = document.createElement('p');
+    p.className = 'philosophy';
+    p.textContent = d.philosophy;
+    sec.appendChild(p);
+
+    const dl = document.createElement('a');
+    dl.className = 'btn';
+    dl.href = d.url; dl.target = '_blank'; dl.rel = 'noopener noreferrer';
+    dl.textContent = 'Official ' + d.name + ' download ⬇';
+    sec.appendChild(dl);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    wrap.innerHTML =
+      '<table><caption>' + d.name + ' comparison. Learning curve: more dots = more difficult.</caption>' +
+      '<thead><tr><th scope="col">Control level</th><th scope="col">Learning curve</th>' +
+      '<th scope="col">Ready to use</th><th scope="col">Stability</th><th scope="col">Packages</th></tr></thead>' +
+      '<tbody><tr>' +
+      '<td>' + dotsHTML(d.table.control.l, 'Control') + d.table.control.t + '</td>' +
+      '<td>' + dotsHTML(d.table.learning.l, 'Difficulty') + d.table.learning.t + '</td>' +
+      '<td>' + dotsHTML(d.table.ready.l, 'Ready to use') + d.table.ready.t + '</td>' +
+      '<td>' + dotsHTML(d.table.stability.l, 'Stability') + d.table.stability.t + '</td>' +
+      '<td>' + d.table.packages + '</td>' +
+      '</tr></tbody></table>';
+    sec.appendChild(wrap);
+    list.appendChild(sec);
+  });
+
+  // Global comparison table (top 3 highlighted)
+  let rows = '';
+  ranking.forEach((r, i) => {
+    const d = r.distro, t = d.table;
+    rows += '<tr class="' + (i < 3 ? 'hl' : '') + '"><th scope="row">' + d.name + '</th>' +
+      '<td>' + t.control.t + '</td><td>' + t.learning.t + '</td><td>' + t.ready.t + '</td><td>' + t.stability.t + '</td></tr>';
+  });
+  $('#compare-table').innerHTML =
+    '<table><caption>Highlighted rows are your top 3 matches.</caption><thead><tr>' +
+    '<th scope="col">Distro</th><th scope="col">Control level</th><th scope="col">Learning curve</th>' +
+    '<th scope="col">Ready to use</th><th scope="col">Stability</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+/* ============================================================
+   RESTART
+   ============================================================ */
+function restart() {
+  state.index = 0;
+  state.answers.fill(null);
+  resultsEl.classList.remove('show');
+  distrosEl.classList.remove('show');
+  quizEl.style.display = '';
+  renderQuestion();
+  quizEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+btnNext.addEventListener('click', goNext);
+btnBack.addEventListener('click', goBack);
+$('#btn-restart').addEventListener('click', restart);
+renderQuestion();
+</script>
+</body>
+</html>

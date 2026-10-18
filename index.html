@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linux Distro Finder — Choose your language</title>
+<meta name="description" content="Choose a language and find the Linux distribution that is right for you.">
+<style>
+:root {
+  --bg-deep: #0a192f;
+  --accent: #64ffda;
+  --accent-2: #4facfe;
+  --text: #e6f1ff;
+  --text-dim: #8ea6c8;
+  --glass: rgba(17, 34, 64, 0.55);
+  --border: rgba(100, 255, 218, 0.16);
+  --shadow: 0 10px 40px rgba(2, 12, 27, 0.55);
+  --radius: 20px;
+  --font: 'Inter', 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { min-height: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+  color: var(--text);
+  line-height: 1.6;
+  background:
+    radial-gradient(900px 600px at 10% -10%, rgba(79, 172, 254, 0.18), transparent 60%),
+    radial-gradient(800px 600px at 100% 10%, rgba(100, 255, 218, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--bg-deep), #071324 100%);
+  background-attachment: fixed;
+}
+h1, h2 { line-height: 1.2; margin: 0 0 .5em; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 12px; }
+.container { width: min(760px, 100% - 2rem); margin-inline: auto; }
+
+header.hero { text-align: center; padding: clamp(3rem, 10vh, 6rem) 0 2rem; }
+header.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+header.hero p { color: var(--text-dim); max-width: 48ch; margin: 0 auto; }
+
+.language-picker {
+  padding: clamp(1.25rem, 4vw, 2rem);
+  margin-bottom: 3rem;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.language-picker h2 { text-align: center; font-size: clamp(1.25rem, 3vw, 1.6rem); }
+.language-list { display: grid; gap: .85rem; margin-top: 1.5rem; }
+.language-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  color: var(--text);
+  text-decoration: none;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+.language-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  background: rgba(100,255,218,.07);
+}
+.language-icon { font-size: 1.6rem; flex: none; }
+.language-name { font-size: 1.05rem; font-weight: 600; }
+.language-code { margin-left: auto; color: var(--text-dim); font-size: .85rem; }
+footer { margin-top: auto; padding: 1rem; color: var(--text-dim); text-align: center; font-size: .8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="container">
+    <h1>Linux Distro Finder</h1>
+    <p>Find the Linux distribution that fits you. Choose the language for your quiz to get started.</p>
+  </div>
+</header>
+
+<main class="container">
+  <section class="language-picker" aria-labelledby="language-heading">
+    <h2 id="language-heading">Choose your language</h2>
+    <nav class="language-list" aria-label="Quiz languages">
+      <a class="language-link" href="languages/eng.html" lang="en">
+        <span class="language-icon" aria-hidden="true">🇬🇧</span>
+        <span class="language-name">English</span>
+        <span class="language-code" aria-hidden="true">EN</span>
+      </a>
+      <a class="language-link" href="languages/esp.html" lang="es">
+        <span class="language-icon" aria-hidden="true">🇪🇸</span>
+        <span class="language-name">Español</span>
+        <span class="language-code" aria-hidden="true">ES</span>
+      </a>
+      <a class="language-link" href="languages/ita.html" lang="it">
+        <span class="language-icon" aria-hidden="true">🇮🇹</span>
+        <span class="language-name">Italiano</span>
+        <span class="language-code" aria-hidden="true">IT</span>
+      </a>
+    </nav>
+  </section>
+</main>
+
+<footer>Choose a language to begin the quiz.</footer>
+</body>
+</html>
